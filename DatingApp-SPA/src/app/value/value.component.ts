@@ -8,6 +8,9 @@ import { FunctionCall } from '@angular/compiler';
   styleUrls: ['./value.component.css']
 })
 export class ValueComponent implements OnInit {
+  isavalible = false;
+  month = ['Jan', 'Feb'];
+
   values: any;
 
   constructor(private http: HttpClient) { }

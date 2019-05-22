@@ -1,3 +1,11 @@
 <p *ngFor="let value of values">
   {{value.id}}, {{value.name}}
 </p>
+
+<div>Month: <select name="" id=""> <option *ngFor="let item of month">{{item}}</option></select></div>
+
+<span *ngIf="isavalible ; else condition1">Condition is valid.</span>
+<button *ngIf="false ; else template1">Submit</button>
+<ng-template #template1> <button>Cancel</button></ng-template>
+
+<ng-template #condition1> condition1 is invalid</ng-template>
