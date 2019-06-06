@@ -35,7 +35,7 @@ namespace DatingApp.API.Controllers
                 _cloudinaryConfig.Value.CloudName,
                 _cloudinaryConfig.Value.ApiKey,
                 _cloudinaryConfig.Value.ApiSecret
-            );
+             );
             _cloudinary = new Cloudinary(acc);
         }
         [HttpGet("{id}", Name = "GetPhoto")]
@@ -47,7 +47,7 @@ namespace DatingApp.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddPhotoForUser(int userId,[FromForm]PhotoForCreaionDto photoForCreaionDto)
+        public async Task<IActionResult> AddPhotoForUser(int userId, [FromForm]PhotoForCreaionDto photoForCreaionDto)
         {
             if (userId != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
             {
@@ -66,8 +66,7 @@ namespace DatingApp.API.Controllers
                         File = new FileDescription(file.Name, stream),
                         Transformation = new Transformation().Width(500).Height(500).Crop("fill").Gravity("face")
                     };
-                    ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
-
+                    //ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
                     uploadResult = _cloudinary.Upload(uploadParams);
                 }
             }
@@ -78,6 +77,8 @@ namespace DatingApp.API.Controllers
             if (!userFromRepo.Photos.Any(u => u.IsMain))
                 photo.IsMain = true;
 
+            userFromRepo.Photos.Add(photo);
+
             if (await _repo.SaveAll())
             {
                 var photoToReturn = _mapper.Map<PhotoForReturnDto>(photo);
@@ -85,6 +86,68 @@ namespace DatingApp.API.Controllers
                 return CreatedAtRoute("GetPhoto", new { Id = photo.Id }, photoToReturn);
             }
             return BadRequest("Could not add the photo");
+        }
+
+        [HttpPost("{id}/setMain")]
+        public async Task<IActionResult> SetMainPhoto(int userId, int id)
+        {
+            if (userId != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+            var user = await _repo.GetUser(userId);
+            if (!user.Photos.Any(p => p.Id == id))
+                return Unauthorized();
+
+            var photoFromRepo = await _repo.GetPhoto(id);
+            if (photoFromRepo.IsMain)
+                return BadRequest("This is already the main photho");
+
+            var currentMainPhoto = await _repo.GetMainPhotoForUser(userId);
+            currentMainPhoto.IsMain = false;
+            photoFromRepo.IsMain = true;
+
+            if (await _repo.SaveAll())
+                return NoContent();
+
+            return BadRequest("Could not set photo to main");
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeletePhoto(int userId, int id)
+        {
+            if (userId != int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
+                return Unauthorized();
+            var user = await _repo.GetUser(userId);
+            if (!user.Photos.Any(p => p.Id == id))
+                return Unauthorized();
+
+            var photoFromRepo = await _repo.GetPhoto(id);
+            if (photoFromRepo.IsMain)
+                return BadRequest("You cannot delete your main photo");
+
+            if (photoFromRepo.PublicID != null)
+            {
+                var deleteParams = new DeletionParams(photoFromRepo.PublicID);
+                var result = _cloudinary.Destroy(deleteParams);
+
+                if (result.Result == "ok")
+                {
+                    _repo.Delete(photoFromRepo);
+                }
+            }
+
+            if (photoFromRepo.PublicID == null)
+            {
+                _repo.Delete(photoFromRepo);
+            }
+
+            if (await _repo.SaveAll())
+            {
+
+                return Ok();
+            }
+
+            return BadRequest("Failed to delete the photo");
+
         }
     }
 }
