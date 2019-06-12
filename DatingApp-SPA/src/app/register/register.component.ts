@@ -1,7 +1,10 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { AuthService } from '../_services/auth.service';
 import { AlertifyService } from '../_services/alertify.service';
-import { AlertPromise } from 'selenium-webdriver';
+import { FormGroup, FormControl, Validators, FormBuilder } from '@angular/forms';
+import { BsDatepickerConfig } from 'ngx-bootstrap';
+import { User } from '../_models/user';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-register',
@@ -11,19 +14,53 @@ import { AlertPromise } from 'selenium-webdriver';
 export class RegisterComponent implements OnInit {
   // @Input() valuesFromHome: any;
   @Output() cancelRegister = new EventEmitter();
+  user: User;
+  registerForm: FormGroup;
+  bsConfig: Partial<BsDatepickerConfig>; // Partial- evin nasesary fild you can not fill
 
-  model: any = {};
-
-  constructor(public authServisce: AuthService, private alertify: AlertifyService) { }
+  constructor(private fb: FormBuilder, private authServisce: AuthService, private alertify: AlertifyService, private router: Router) { }
   ngOnInit() {
+    // Alternative way to validate the form
+    // this.registerForm = new FormGroup({
+    //   username: new FormControl('', Validators.required),
+    //   password: new FormControl('', [Validators.required, Validators.minLength(4), Validators.maxLength(8)]),
+    //   confirmPassword: new FormControl('', Validators.required),
+    // }, this.passwordMatchValidator);
+    this.bsConfig = {
+      containerClass: 'theme-dark-blue',
+      dateInputFormat: 'DD/MM/YYYY'
+    };
+    this.createRegisterForm();
   }
 
+  createRegisterForm() {
+    this.registerForm = this.fb.group({
+      gender: ['male'],
+      username: ['', Validators.required],
+      knownAs: ['', Validators.required],
+      dateOfBirth: [null, Validators.required],
+      city: ['', Validators.required],
+      country: ['', Validators.required],
+      password: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(8)]],
+      confirmPassword: ['', Validators.required]
+    }, { validator: this.passwordMatchValidator });
+  }
+  passwordMatchValidator(g: FormGroup) {
+    return g.get('password').value === g.get('confirmPassword').value ? null : { 'mismatch': true };
+  }
   register() {
-    this.authServisce.register(this.model).subscribe(() => {
-      this.alertify.success('registration successful');
-    }, error => {
-      this.alertify.error(error);
-    });
+    if (this.registerForm.valid) {
+      this.user = Object.assign({}, this.registerForm.value);
+      this.authServisce.register(this.user).subscribe(() => {
+        this.alertify.success('Registration successful');
+      }, error => {
+        this.alertify.error(error);
+      }, () => {
+        this.authServisce.login(this.user).subscribe(() => {
+          this.router.navigate(['/members']);
+        });
+      });
+    }
   }
 
   cancel() {
