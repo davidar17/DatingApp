@@ -5,11 +5,13 @@ using System.Threading.Tasks;
 using AutoMapper;
 using DatingApp.API.Data;
 using DatingApp.API.Dtos;
+using DatingApp.API.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DatingApp.API.Controllers
 {
+    [ServiceFilter(typeof(LogUserActivity))]
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
@@ -38,6 +40,7 @@ namespace DatingApp.API.Controllers
             var userToReturn = _mapper.Map<UserForDetailedDto>(user);
             return Ok(userToReturn);
         }
+         
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UserForUpdateDto userForUpdateDto){
             if(id!= int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value))
