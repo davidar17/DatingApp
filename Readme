@@ -5,4 +5,8 @@ Add sqlite nugat to visual studio
  3.a)  Please pick the version that matches the runtime version you are using (2.2.6)
  
  
+ Bootstrap
+ 1) npm install bootstrap font-awwsome
+ 
+ Automapper
  
