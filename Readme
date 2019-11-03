@@ -1,1 +1,8 @@
 Add sqlite nugat to visual studio
+ 1) ctlr + shift + p 
+ 2) nuget 
+ 3) microsoft.entityframeworkcore.sqlite  (select sqlite not sqlite.core)
+ 3.a)  Please pick the version that matches the runtime version you are using (2.2.6)
+ 
+ 
+ 
