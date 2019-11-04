@@ -7,6 +7,9 @@ Add sqlite nugat to visual studio
  
  Bootstrap
  1) npm install bootstrap font-awwsome
+ 2) Add to src > styles.css 
+  @import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
+  @import '../node_modules/font-awesome/css/font-awesome.min.css';
  
  Automapper
  
